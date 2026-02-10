@@ -102,14 +102,11 @@ export function ProductLookup() {
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
   const containerClass =
-    "grid w-full gap-6 rounded-3xl border border-zinc-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/80 sm:p-6" +
-    (cart.length > 0
-      ? " lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
-      : "");
+    "grid w-full grid-cols-1 items-start gap-6 rounded-3xl border border-zinc-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/80 sm:p-6";
 
   return (
     <div className={containerClass}>
-      <div>
+      <section className="min-w-0">
         <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
           Tra cứu sản phẩm & tạo đơn
         </h1>
@@ -197,65 +194,65 @@ export function ProductLookup() {
             </div>
           ) : (
             <div className="text-xs text-zinc-500 dark:text-zinc-400">
-              Sản phẩm mẫu: iPhone, MacBook, AirPods
+              Sản phẩm mẫu: Chổi, Bút
             </div>
           )}
         </div>
+      </section>
 
-        {cart.length > 0 && (
-          <div className="mt-6 rounded-3xl border border-zinc-200 bg-zinc-50/80 p-4 text-sm shadow-sm dark:border-zinc-800 dark:bg-zinc-950/80 lg:mt-0">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                Giỏ hàng
-              </h2>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                {cart.length} mặt hàng
-              </span>
-            </div>
-            <div className="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
-              {cart.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between gap-3 py-2"
-                >
-                  <div>
-                    <div className="font-medium">{item.name}</div>
-                    <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                      Đơn giá: {formatVnd(item.price)}
-                      {item.unit ? ` / ${item.unit}` : ""}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={1}
-                      value={item.qty}
-                      onChange={(e) =>
-                        handleQtyChange(item.id, Number(e.target.value))
-                      }
-                      className="w-16 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs outline-none ring-zinc-900/10 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-white/10"
-                    />
-                    <div className="text-xs font-medium text-zinc-800 dark:text-zinc-100">
-                      {formatVnd(item.price * item.qty)}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemove(item.id)}
-                      className="text-xs text-red-500 hover:text-red-600"
-                    >
-                      Xóa
-                    </button>
+      {cart.length > 0 && (
+        <aside className="min-w-0 rounded-3xl border border-zinc-200 bg-zinc-50/80 p-4 text-sm shadow-sm dark:border-zinc-800 dark:bg-zinc-950/80">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              Giỏ hàng
+            </h2>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {cart.length} mặt hàng
+            </span>
+          </div>
+          <div className="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
+            {cart.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between gap-3 py-2"
+              >
+                <div className="min-w-0">
+                  <div className="truncate font-medium">{item.name}</div>
+                  <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Đơn giá: {formatVnd(item.price)}
+                    {item.unit ? ` / ${item.unit}` : ""}
                   </div>
                 </div>
-              ))}
-            </div>
-            <div className="mt-3 flex items-center justify-between border-t border-zinc-200 pt-3 text-sm font-semibold dark:border-zinc-800">
-              <span>Tổng tiền</span>
-              <span>{formatVnd(total)}</span>
-            </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    value={item.qty}
+                    onChange={(e) =>
+                      handleQtyChange(item.id, Number(e.target.value))
+                    }
+                    className="w-16 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs outline-none ring-zinc-900/10 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-white/10"
+                  />
+                  <div className="text-xs font-medium text-zinc-800 dark:text-zinc-100">
+                    {formatVnd(item.price * item.qty)}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(item.id)}
+                    className="text-xs text-red-500 hover:text-red-600"
+                  >
+                    Xóa
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+          <div className="mt-3 flex items-center justify-between border-t border-zinc-200 pt-3 text-sm font-semibold dark:border-zinc-800">
+            <span>Tổng tiền</span>
+            <span>{formatVnd(total)}</span>
+          </div>
+        </aside>
+      )}
     </div>
   );
 }

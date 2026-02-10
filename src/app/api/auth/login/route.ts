@@ -7,6 +7,7 @@ import { createSession } from "@/lib/auth";
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
+  remember: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { email, password } = parsed.data;
+    const { email, password, remember } = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -39,11 +40,14 @@ export async function POST(req: Request) {
       );
     }
 
-    await createSession({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    await createSession(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      { remember: remember === true },
+    );
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (err) {

@@ -24,10 +24,6 @@ export default async function LoginPage({
 
       <div className="mt-4 space-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
         <div>
-          Tài khoản mẫu:
-          <span className="ml-1 font-mono">admin@example.com / Admin123!</span>
-        </div>
-        <div>
           <span className="font-medium">Admin</span>: thêm/sửa/xóa sản phẩm ·{" "}
           <span className="font-medium">User</span>: chỉ tra cứu & tạo bill.
         </div>
@@ -35,4 +31,3 @@ export default async function LoginPage({
     </div>
   );
 }
-

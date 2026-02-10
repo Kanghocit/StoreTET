@@ -10,12 +10,24 @@ export type Session = {
 
 const SESSION_COOKIE = "session";
 
+type CreateSessionOptions = {
+  /**
+   * If true, persist the session longer (remember me).
+   * If false/undefined, use a session cookie + shorter JWT expiry.
+   */
+  remember?: boolean;
+};
+
 function getSecretKey() {
   const secret = process.env.AUTH_SECRET ?? "dev-secret-change-me";
   return new TextEncoder().encode(secret);
 }
 
-export async function createSession(session: Session) {
+export async function createSession(session: Session, opts?: CreateSessionOptions) {
+  const remember = opts?.remember === true;
+  const maxAgeSeconds = remember ? 60 * 60 * 24 * 30 : undefined; // 30 days
+  const jwtExpiry = remember ? "30d" : "1d";
+
   const token = await new SignJWT({
     email: session.email,
     role: session.role,
@@ -23,7 +35,7 @@ export async function createSession(session: Session) {
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(session.userId)
     .setIssuedAt()
-    .setExpirationTime("7d")
+    .setExpirationTime(jwtExpiry)
     .sign(getSecretKey());
 
   const jar = await cookies();
@@ -32,7 +44,7 @@ export async function createSession(session: Session) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+    ...(typeof maxAgeSeconds === "number" ? { maxAge: maxAgeSeconds } : {}),
   });
 }
 

@@ -65,8 +65,7 @@ export default function RootLayout({
             {children}
           </main>
           <footer className="border-t border-zinc-200/70 bg-white/60 py-3 text-center text-[11px] text-zinc-500 backdrop-blur dark:border-zinc-800 dark:bg-black/60 dark:text-zinc-500 sm:text-xs">
-            © {new Date().getFullYear()} KhangStore · Xây dựng bằng Next.js &
-            Prisma
+            © {new Date().getFullYear()} KhangStore
           </footer>
         </div>
       </body>

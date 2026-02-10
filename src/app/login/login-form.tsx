@@ -43,6 +43,15 @@ export function LoginForm({ nextUrl }: { nextUrl?: string }) {
         />
       </div>
 
+      <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+        <input
+          type="checkbox"
+          name="remember"
+          className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900/20 dark:border-zinc-700 dark:bg-zinc-950"
+        />
+        Ghi nhớ đăng nhập
+      </label>
+
       {state?.error ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200">
           {state.error}
