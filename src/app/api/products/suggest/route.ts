@@ -20,7 +20,7 @@ export async function GET(req: Request) {
       id: true,
       name: true,
       price: true,
-      unit: true,
+      unit: { select: { name: true } },
       category: { select: { name: true } },
     },
     orderBy: { name: "asc" },
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
       id: p.id,
       name: p.name,
       price: p.price,
-      unit: p.unit,
+      unit: p.unit?.name ?? "",
       categoryName: p.category?.name ?? undefined,
     })),
   });

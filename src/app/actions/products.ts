@@ -27,7 +27,7 @@ export async function lookupProductAction(
     if (parsed.success) {
       const product = await prisma.product.findUnique({
         where: { id: parsed.data.id },
-        include: { category: true },
+        include: { category: true, unit: true },
       });
       if (product)
         return {
@@ -35,7 +35,7 @@ export async function lookupProductAction(
           id: product.id,
           name: product.name,
           price: product.price,
-          unit: product.unit,
+          unit: product.unit?.name ?? "",
           categoryName: product.category?.name,
         };
     }
@@ -51,7 +51,7 @@ export async function lookupProductAction(
 
   const product = await prisma.product.findFirst({
     where: { name: parsed.data.name },
-    include: { category: true },
+    include: { category: true, unit: true },
   });
   if (!product) return { ok: false, error: "Không tìm thấy sản phẩm." };
 
@@ -60,7 +60,7 @@ export async function lookupProductAction(
     id: product.id,
     name: product.name,
     price: product.price,
-    unit: product.unit,
+    unit: product.unit?.name ?? "",
     categoryName: product.category?.name,
   };
 }
@@ -71,11 +71,14 @@ const upsertSchema = z.object({
     .number()
     .int()
     .min(0, "Giá phải là số nguyên không âm."),
-  unit: z.string().trim().default(""),
 });
 
 const categorySchema = z.object({
   name: z.string().trim().min(1, "Vui lòng nhập tên loại sản phẩm."),
+});
+
+const unitSchema = z.object({
+  name: z.string().trim().min(1, "Vui lòng nhập tên đơn vị."),
 });
 
 export async function createCategoryAction(formData: FormData) {
@@ -114,24 +117,60 @@ export async function deleteCategoryAction(formData: FormData) {
   revalidatePath("/admin");
 }
 
+export async function createUnitAction(formData: FormData) {
+  await requireAdmin();
+  const parsed = unitSchema.safeParse({ name: formData.get("name") });
+  if (!parsed.success)
+    throw new Error(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
+  await prisma.unit.create({ data: { name: parsed.data.name } });
+  revalidatePath("/admin");
+}
+
+const updateUnitSchema = unitSchema.extend({
+  id: z.string().min(1),
+});
+
+export async function updateUnitAction(formData: FormData) {
+  await requireAdmin();
+  const parsed = updateUnitSchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+  });
+  if (!parsed.success)
+    throw new Error(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
+  await prisma.unit.update({
+    where: { id: parsed.data.id },
+    data: { name: parsed.data.name },
+  });
+  revalidatePath("/admin");
+}
+
+export async function deleteUnitAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) throw new Error("Thiếu mã đơn vị.");
+  await prisma.unit.delete({ where: { id } });
+  revalidatePath("/admin");
+}
+
 export async function createProductAction(formData: FormData) {
   await requireAdmin();
   const categoryId = formData.get("categoryId");
+  const unitId = formData.get("unitId");
   const parsed = upsertSchema.safeParse({
     name: formData.get("name"),
     price: formData.get("price"),
-    unit: formData.get("unit") ?? "",
   });
   if (!parsed.success)
     throw new Error(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
 
-  const { name, price, unit } = parsed.data;
-  const data: { name: string; price: number; unit: string; categoryId?: string } = {
+  const { name, price } = parsed.data;
+  const data: { name: string; price: number; categoryId?: string; unitId?: string } = {
     name,
     price: price * 1000,
-    unit,
   };
   if (categoryId && typeof categoryId === "string") data.categoryId = categoryId;
+  if (unitId && typeof unitId === "string") data.unitId = unitId;
   await prisma.product.create({ data });
   revalidatePath("/admin");
 }
@@ -146,19 +185,21 @@ export async function updateProductAction(formData: FormData) {
     id: formData.get("id"),
     name: formData.get("name"),
     price: formData.get("price"),
-    unit: formData.get("unit") ?? "",
   });
   if (!parsed.success)
     throw new Error(parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ.");
 
-  const { id, name, price, unit } = parsed.data;
+  const { id, name, price } = parsed.data;
   const categoryId = formData.get("categoryId");
-  const updateData: { name: string; price: number; unit: string; categoryId?: string | null } = {
-    name,
-    price: price * 1000,
-    unit,
-  };
+  const unitId = formData.get("unitId");
+  const updateData: {
+    name: string;
+    price: number;
+    categoryId?: string | null;
+    unitId?: string | null;
+  } = { name, price: price * 1000 };
   if (categoryId !== undefined) updateData.categoryId = categoryId ? String(categoryId) : null;
+  if (unitId !== undefined) updateData.unitId = unitId ? String(unitId) : null;
   await prisma.product.update({
     where: { id },
     data: updateData,
@@ -188,16 +229,15 @@ export async function importProductsAction(formData: FormData) {
     throw new Error("Không có dữ liệu để import.");
   }
 
-  const records: { name: string; price: number; unit: string }[] = [];
+  const records: { name: string; price: number; unitName: string }[] = [];
 
   for (const line of lines) {
     const parts = line.split(",").map((p) => p.trim());
     if (parts.length < 2) continue;
-    const [name, priceStr, unit = ""] = parts;
+    const [name, priceStr, unitName = ""] = parts;
     const price = Number(priceStr);
     if (!name || !Number.isFinite(price)) continue;
-    // Nhập 15 -> lưu 15000
-    records.push({ name, price: Math.round(price) * 1000, unit });
+    records.push({ name, price: Math.round(price) * 1000, unitName });
   }
 
   if (records.length === 0) {
@@ -205,17 +245,31 @@ export async function importProductsAction(formData: FormData) {
   }
 
   for (const r of records) {
+    let unitId: string | null = null;
+    if (r.unitName.trim()) {
+      const u = await prisma.unit.findFirst({ where: { name: r.unitName.trim() } });
+      if (u) unitId = u.id;
+      else {
+        const created = await prisma.unit.create({ data: { name: r.unitName.trim() } });
+        unitId = created.id;
+      }
+    }
     const existing = await prisma.product.findFirst({
       where: { name: r.name, ...(categoryId ? { categoryId } : { categoryId: null }) },
     });
     if (existing)
       await prisma.product.update({
         where: { id: existing.id },
-        data: { price: r.price, unit: r.unit },
+        data: { price: r.price, unitId },
       });
     else
       await prisma.product.create({
-        data: { name: r.name, price: r.price, unit: r.unit, ...(categoryId ? { categoryId } : {}) },
+        data: {
+          name: r.name,
+          price: r.price,
+          ...(categoryId ? { categoryId } : {}),
+          ...(unitId ? { unitId } : {}),
+        },
       });
   }
 

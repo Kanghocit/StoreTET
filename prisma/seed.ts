@@ -27,9 +27,10 @@ async function main() {
     create: { email: userEmail, passwordHash: userHash, role: Role.USER },
   });
 
-  // Xóa toàn bộ sản phẩm và loại sản phẩm cũ (giữ lại User)
+  // Xóa toàn bộ sản phẩm, loại và đơn vị cũ (giữ lại User)
   await prisma.product.deleteMany({});
   await prisma.category.deleteMany({});
+  await prisma.unit.deleteMany({});
 }
 
 main()

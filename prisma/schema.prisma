@@ -30,13 +30,20 @@ model Category {
   products Product[]
 }
 
+model Unit {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  name     String    @unique
+  products Product[]
+}
+
 model Product {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
   categoryId String?   @db.ObjectId
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  unitId     String?   @db.ObjectId
+  unit       Unit?     @relation(fields: [unitId], references: [id], onDelete: SetNull)
   name       String
   price      Int
-  unit       String    @default("")
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 }

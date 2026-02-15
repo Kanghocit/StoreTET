@@ -7,16 +7,29 @@ import {
   deleteProductAction,
 } from "@/app/actions/products";
 import { RefreshAfterSubmit } from "./refresh-after-submit";
-
+import { SearchableSelect } from "./searchable-select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 type Category = { id: string; name: string };
+type Unit = { id: string; name: string };
 
 type ProductRow = {
   id: string;
   name: string;
   price: number;
-  unit: string;
   categoryId?: string;
   categoryName?: string | null;
+  unitId?: string;
+  unitName?: string | null;
 };
 
 function formatVnd(price: number) {
@@ -29,12 +42,14 @@ function formatVnd(price: number) {
 
 export function ProductsTable({
   categories,
+  units,
   products,
   createProductAction,
   updateProductAction,
   deleteProductAction,
 }: {
   categories: Category[];
+  units: Unit[];
   products: ProductRow[];
   createProductAction: (formData: FormData) => void | Promise<void>;
   updateProductAction: (formData: FormData) => void | Promise<void>;
@@ -48,179 +63,164 @@ export function ProductsTable({
     return products.filter(
       (p) =>
         p.name.toLowerCase().includes(needle) ||
-        (p.categoryName?.toLowerCase().includes(needle) ?? false),
+        (p.categoryName?.toLowerCase().includes(needle) ?? false) ||
+        (p.unitName?.toLowerCase().includes(needle) ?? false),
     );
   }, [products, q]);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-        <div className="flex flex-col gap-3">
-          <form action={createProductAction} className="flex flex-wrap items-center gap-2">
-            <RefreshAfterSubmit />
-            <select
-              name="categoryId"
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-zinc-900/10 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-white/10"
-            >
-              <option value="">-- Loại --</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <input
-              name="name"
-              placeholder="Tên sản phẩm"
-              className="min-w-40 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-zinc-900/10 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-white/10"
-              required
-            />
-            <input
+    <Card>
+      <CardHeader className="space-y-4">
+        <form
+          action={createProductAction}
+          className="grid gap-3 sm:grid-cols-2"
+        >
+          <RefreshAfterSubmit />
+          <SearchableSelect
+            name="categoryId"
+            options={categories}
+            placeholder="-- Loại --"
+            allowEmpty
+            className="w-full"
+          />
+          <SearchableSelect
+            name="unitId"
+            options={units}
+            placeholder="-- Đơn vị --"
+            allowEmpty
+            className="w-full"
+          />
+          <Input
+            name="name"
+            placeholder="Tên sản phẩm"
+            className="w-full sm:col-span-2"
+            required
+          />
+          <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+            <Input
               name="price"
               type="number"
               min={0}
               step={1}
               placeholder="Giá (nghìn)"
-              className="w-24 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-zinc-900/10 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-white/10"
+              className="w-28 shrink-0"
               required
             />
-            <input
-              name="unit"
-              placeholder="Đơn vị"
-              className="w-24 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-zinc-900/10 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-white/10"
-            />
-            <button
-              type="submit"
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
-            >
+            <Button type="submit" className="shrink-0">
               Thêm
-            </button>
-          </form>
-          <div className="flex items-center gap-2">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Tìm theo tên hoặc loại..."
-              className="w-full max-w-xs rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-zinc-900/10 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-white/10"
-            />
-            {q.trim() ? (
-              <button
-                type="button"
-                onClick={() => setQ("")}
-                className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
-              >
-                Xóa
-              </button>
-            ) : null}
-            <span className="text-sm text-zinc-500">
-              {filtered.length}{q.trim() ? ` / ${products.length}` : ""} sản phẩm
-            </span>
+            </Button>
           </div>
+        </form>
+        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Tìm theo tên, loại hoặc đơn vị..."
+            className="min-w-0 flex-1 max-w-md"
+          />
+          {q.trim() ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => setQ("")}>
+              Xóa
+            </Button>
+          ) : null}
+          <span className="shrink-0 text-sm text-muted-foreground">
+            {filtered.length}
+            {q.trim() ? ` / ${products.length}` : ""} sản phẩm
+          </span>
         </div>
-      </div>
-
-      {filtered.length === 0 ? (
-        <div className="px-6 py-8 text-sm text-zinc-600 dark:text-zinc-400">
-          {products.length === 0 ? "Chưa có sản phẩm. Thêm ở trên hoặc thêm loại ở tab Loại sản phẩm." : "Không tìm thấy."}
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-zinc-50 text-xs text-zinc-600 dark:bg-zinc-900/30 dark:text-zinc-400">
-              <tr className="text-left">
-                <th className="px-6 py-3 font-medium">Loại</th>
-                <th className="px-6 py-3 font-medium">Tên</th>
-                <th className="px-6 py-3 font-medium">Giá (nghìn)</th>
-                <th className="px-6 py-3 font-medium">Đơn vị</th>
-                <th className="px-6 py-3 font-medium">Hiển thị</th>
-                <th className="px-6 py-3 font-medium text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+      </CardHeader>
+      <CardContent>
+        {filtered.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            {products.length === 0
+              ? "Chưa có sản phẩm. Thêm ở trên; thêm Loại và Đơn vị ở các tab tương ứng."
+              : "Không tìm thấy."}
+          </p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Loại</TableHead>
+                <TableHead>Đơn vị</TableHead>
+                <TableHead>Tên</TableHead>
+                <TableHead>Giá (nghìn)</TableHead>
+                <TableHead>Hiển thị</TableHead>
+                <TableHead className="text-right">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filtered.map((p) => {
                 const formId = `update-${p.id}`;
                 return (
-                  <tr key={p.id} className="align-middle">
-                    <td className="px-6 py-3">
-                      <select
-                        form={formId}
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <SearchableSelect
                         name="categoryId"
+                        options={categories}
                         defaultValue={p.categoryId ?? ""}
-                        className="min-w-32 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-zinc-900/10 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-white/10"
-                      >
-                        <option value="">Chưa phân loại</option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-6 py-3">
-                      <input
+                        placeholder="Chưa phân loại"
+                        form={formId}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <SearchableSelect
+                        name="unitId"
+                        options={units}
+                        defaultValue={p.unitId ?? ""}
+                        placeholder="--"
+                        form={formId}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
                         form={formId}
                         name="name"
                         defaultValue={p.name}
-                        className="min-w-48 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-zinc-900/10 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-white/10"
+                        className="min-w-48"
                         required
                       />
-                    </td>
-                    <td className="px-6 py-3">
-                      <input
+                    </TableCell>
+                    <TableCell>
+                      <Input
                         form={formId}
                         name="price"
                         type="number"
                         min={0}
                         step={1}
                         defaultValue={p.price / 1000}
-                        className="w-24 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-zinc-900/10 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-white/10"
+                        className="w-24"
                         required
                       />
-                    </td>
-                    <td className="px-6 py-3">
-                      <input
-                        form={formId}
-                        name="unit"
-                        defaultValue={p.unit}
-                        placeholder="vd: hộp"
-                        className="w-24 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-zinc-900/10 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-white/10"
-                      />
-                    </td>
-                    <td className="px-6 py-3 text-zinc-600 dark:text-zinc-400">
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
                       {formatVnd(p.price)}
-                      {p.unit ? ` / ${p.unit}` : ""}
-                    </td>
-                    <td className="px-6 py-3">
+                      {p.unitName ? ` / ${p.unitName}` : ""}
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center justify-end gap-2">
                         <form id={formId} action={updateProductAction} className="inline">
                           <RefreshAfterSubmit />
                           <input type="hidden" name="id" value={p.id} />
-                          <button
-                            type="submit"
-                            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
-                          >
+                          <Button type="submit" variant="secondary" size="sm">
                             Lưu
-                          </button>
+                          </Button>
                         </form>
                         <form action={deleteProductAction} className="inline">
                           <RefreshAfterSubmit />
                           <input type="hidden" name="id" value={p.id} />
-                          <button
-                            type="submit"
-                            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200 dark:hover:bg-red-950/50"
-                          >
+                          <Button type="submit" variant="destructive" size="sm">
                             Xóa
-                          </button>
+                          </Button>
                         </form>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }

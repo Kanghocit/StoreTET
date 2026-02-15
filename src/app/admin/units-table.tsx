@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import {
-  createCategoryAction,
-  updateCategoryAction,
-  deleteCategoryAction,
+  createUnitAction,
+  updateUnitAction,
+  deleteUnitAction,
 } from "@/app/actions/products";
 import { RefreshAfterSubmit } from "./refresh-after-submit";
 import { Button } from "@/components/ui/button";
@@ -19,29 +19,29 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-type Category = { id: string; name: string };
+type Unit = { id: string; name: string };
 
-export function CategoriesTable({ categories }: { categories: Category[] }) {
+export function UnitsTable({ units }: { units: Unit[] }) {
   const [q, setQ] = useState("");
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle) return categories;
-    return categories.filter((c) => c.name.toLowerCase().includes(needle));
-  }, [categories, q]);
+    if (!needle) return units;
+    return units.filter((u) => u.name.toLowerCase().includes(needle));
+  }, [units, q]);
 
   return (
     <Card>
       <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
-        <form action={createCategoryAction} className="flex flex-wrap items-center gap-2">
+        <form action={createUnitAction} className="flex flex-wrap items-center gap-2">
           <RefreshAfterSubmit />
           <Input
             name="name"
-            placeholder="Tên loại (vd: Mì tôm)"
+            placeholder="Tên đơn vị (vd: gói, hộp, cái)"
             className="min-w-48"
             required
           />
-          <Button type="submit">Thêm loại</Button>
+          <Button type="submit">Thêm đơn vị</Button>
         </form>
         <div className="flex w-full gap-2 sm:w-auto">
           <Input
@@ -60,8 +60,8 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
       <CardContent>
         {filtered.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            {categories.length === 0
-              ? "Chưa có loại nào. Thêm loại ở trên."
+            {units.length === 0
+              ? "Chưa có đơn vị nào. Thêm đơn vị ở trên."
               : "Không tìm thấy."}
           </p>
         ) : (
@@ -73,17 +73,17 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((c) => {
-                const formId = `cat-${c.id}`;
+              {filtered.map((u) => {
+                const formId = `unit-${u.id}`;
                 return (
-                  <TableRow key={c.id}>
+                  <TableRow key={u.id}>
                     <TableCell>
-                      <form id={formId} action={updateCategoryAction} className="flex gap-2">
+                      <form id={formId} action={updateUnitAction} className="flex gap-2">
                         <RefreshAfterSubmit />
-                        <input type="hidden" name="id" value={c.id} />
+                        <input type="hidden" name="id" value={u.id} />
                         <Input
                           name="name"
-                          defaultValue={c.name}
+                          defaultValue={u.name}
                           className="min-w-48"
                           required
                         />
@@ -93,9 +93,9 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
                       </form>
                     </TableCell>
                     <TableCell className="text-right">
-                      <form action={deleteCategoryAction} className="inline">
+                      <form action={deleteUnitAction} className="inline">
                         <RefreshAfterSubmit />
-                        <input type="hidden" name="id" value={c.id} />
+                        <input type="hidden" name="id" value={u.id} />
                         <Button type="submit" variant="destructive" size="sm">
                           Xóa
                         </Button>
