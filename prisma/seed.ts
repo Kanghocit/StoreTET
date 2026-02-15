@@ -26,6 +26,10 @@ async function main() {
     update: { passwordHash: userHash, role: Role.USER },
     create: { email: userEmail, passwordHash: userHash, role: Role.USER },
   });
+
+  // Xóa toàn bộ sản phẩm và loại sản phẩm cũ (giữ lại User)
+  await prisma.product.deleteMany({});
+  await prisma.category.deleteMany({});
 }
 
 main()

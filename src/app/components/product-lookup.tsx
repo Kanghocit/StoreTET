@@ -15,11 +15,11 @@ export function ProductLookup() {
   const [state, action, pending] = useActionState(lookupProductAction, null);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<
-    { id: string; name: string; price: number; unit: string }[]
+    { id: string; name: string; price: number; unit: string; categoryName?: string }[]
   >([]);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
   const [cart, setCart] = useState<
-    { id: string; name: string; price: number; unit: string; qty: number }[]
+    { id: string; name: string; price: number; unit: string; qty: number; categoryName?: string }[]
   >([]);
   const abortRef = useRef<AbortController | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -42,7 +42,7 @@ export function ProductLookup() {
         );
         if (!res.ok) return;
         const data = (await res.json()) as {
-          items: { id: string; name: string; price: number; unit: string }[];
+          items: { id: string; name: string; price: number; unit: string; categoryName?: string }[];
         };
         setSuggestions(data.items ?? []);
       } catch {
@@ -58,17 +58,17 @@ export function ProductLookup() {
     };
   }, [query]);
 
-  const handleSelect = (name: string) => {
-    setQuery(name);
+  const handleSelect = (item: { id: string; name: string }) => {
+    setQuery(item.name);
     setSuggestions([]);
     const fd = new FormData();
-    fd.set("name", name);
+    fd.set("id", item.id);
     action(fd);
   };
 
   const handleAddToCartFromState = () => {
     if (!state?.ok) return;
-    const id = state.name; // dùng tên làm id logic
+    const id = state.id;
     setCart((prev) => {
       const existing = prev.find((i) => i.id === id);
       if (existing) {
@@ -82,6 +82,7 @@ export function ProductLookup() {
           price: state.price,
           unit: state.unit,
           qty: 1,
+          categoryName: state.categoryName,
         },
       ];
     });
@@ -141,10 +142,17 @@ export function ProductLookup() {
               <button
                 key={s.id}
                 type="button"
-                onClick={() => handleSelect(s.name)}
+                onClick={() => handleSelect(s)}
                 className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900"
               >
-                <span>{s.name}</span>
+                <span>
+                  {s.name}
+                  {s.categoryName ? (
+                    <span className="ml-1.5 text-zinc-400 dark:text-zinc-500">
+                      ({s.categoryName})
+                    </span>
+                  ) : null}
+                </span>
                 <span className="text-xs text-zinc-500">
                   {formatVnd(s.price)}
                   {s.unit ? ` / ${s.unit}` : ""}
@@ -163,7 +171,14 @@ export function ProductLookup() {
           {state?.ok ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-800 shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200">
               <div className="flex items-center justify-between gap-3">
-                <div className="font-medium">{state.name}</div>
+                <div className="font-medium">
+                  {state.name}
+                  {state.categoryName ? (
+                    <span className="ml-1.5 font-normal text-emerald-700 dark:text-emerald-300">
+                      ({state.categoryName})
+                    </span>
+                  ) : null}
+                </div>
                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-100">
                   Đã tra cứu
                 </span>
@@ -217,7 +232,14 @@ export function ProductLookup() {
                 className="flex items-center justify-between gap-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className="truncate font-medium">{item.name}</div>
+                  <div className="truncate font-medium">
+                    {item.name}
+                    {item.categoryName ? (
+                      <span className="ml-1 text-zinc-400 dark:text-zinc-500">
+                        ({item.categoryName})
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="text-xs text-zinc-500 dark:text-zinc-400">
                     Đơn giá: {formatVnd(item.price)}
                     {item.unit ? ` / ${item.unit}` : ""}
